@@ -16,7 +16,7 @@ try:
     authcookie = Office365('', username='', password='').GetCookies()
     site = Site(site_url, version=Version.v365, authcookie=authcookie)
 
-    folder = site.Folder('Delade dokument/2_Stod/2_9_IT')
+    folder = site.Folder('')
 
     #for file_info in folder.files:
         #print(file_info['Name'])
