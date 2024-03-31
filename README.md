@@ -1,6 +1,6 @@
 **Status:** In-progress (code is actively written)
 
-# metadata-ai
+# metadata-ai-bachelor
 Repository for bachelor thesis: "Automation using artificial intelligence".
 
 Python script for generating metadata for Word documents using DeBERTaV3 through Huggingface.
