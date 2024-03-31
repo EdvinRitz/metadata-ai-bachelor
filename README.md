@@ -12,4 +12,4 @@ If you use our project or this repository's contents in your research or project
 
 **APA Style**
 
-Ritzler, E., & Westerberg, E. (2024). *Automatisering med hjälp av artificiell intelligens* [Bachelor's thesis, Stockholm University]. GitHub. https://github.com/EdvinRitz/metadata-ai
+Ritzler, E., & Westerberg, E. (2024). *Automatisering med hjälp av artificiell intelligens* [Bachelor's thesis, Stockholm University]. GitHub. https://github.com/EdvinRitz/metadata-ai-bachelor
