@@ -3,12 +3,14 @@
 #Personuppgifter (inga, finns, känsliga), dokumentdatum, person som gav ut.
 
 import torch
+from transformers import AutoTokenizer, AutoModelForTokenClassification
 from transformers import pipeline
 from shareplum import Site, Office365
 from shareplum.site import Version
 import docx
 from lxml import etree
 import zipfile
+import re
 
 site_url = ''
 
@@ -80,6 +82,64 @@ try:
 except Exception as e:
     print(f"An error occurred: {e}")
 
+tokenizer = AutoTokenizer.from_pretrained("xlm-roberta-large-finetuned-conll03-english")
+model = AutoModelForTokenClassification.from_pretrained("xlm-roberta-large-finetuned-conll03-english",
+    ignore_mismatched_sizes=True  # Suppress warnings about mismatched sizes
+    )
+classifier = pipeline("ner", model=model, tokenizer=tokenizer)
+
+def merge_and_clean_entities(entities, text):
+    if not entities:
+        return []
+
+    # Sort entities by their start position
+    entities.sort(key=lambda x: x['start'])
+
+    merged_entities = []
+    current_entity = entities[0].copy()  # Make a copy to avoid mutating the original
+
+    for next_entity in entities[1:]:
+        # Extract text between the current and next entity
+        gap_text = text[current_entity['end']:next_entity['start']]
+        
+        # Lowercase comparison to decide on merging
+        gap_text_lower = gap_text.lower()
+        if gap_text_lower in [' ', ''] or re.match(r'^[\s,.]+$', gap_text_lower):
+            # If entities are adjacent or separated by acceptable characters, merge them
+            current_entity['end'] = next_entity['end']
+        else:
+            # Add the entity text (preserving original casing) before starting a new entity
+            merged_entities.append(text[current_entity['start']:current_entity['end']])
+            current_entity = next_entity.copy()
+
+    # Don't forget the last entity
+    merged_entities.append(text[current_entity['start']:current_entity['end']])
+
+    # Clean and deduplicate while preserving original casing
+    cleaned_entities = [clean_entity(entity) for entity in merged_entities]
+    unique_entities_list = list(set(cleaned_entities))
+
+    return unique_entities_list
+
+# Define a clean_entity function that doesn't lower case but still removes unwanted characters
+def clean_entity(entity):
+    # Remove leading/trailing punctuation; keep internal punctuation and original casing
+    return re.sub(r'(^\W+|\W+$)', '', entity)
+
+# Sample execution with your classifier and documentText
+res1 = classifier(documentText)
+
+# Assuming classifier results are stored in res1, and it includes 'start' and 'end' positions
+org_entities = [entity for entity in res1 if entity['entity'] in ('I-ORG', 'B-ORG')]
+
+# Preparing entities for merging, including word extraction
+for entity in org_entities:
+    entity['word'] = documentText[entity['start']:entity['end']]
+
+# Merge, clean, and deduplicate entities
+merged_and_cleaned_org_entities = merge_and_clean_entities(org_entities, documentText)
+
+print(merged_and_cleaned_org_entities)
 
 qa_model = pipeline("question-answering", "timpal0l/mdeberta-v3-base-squad2")
 
