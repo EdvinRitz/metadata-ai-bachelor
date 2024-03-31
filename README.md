@@ -3,7 +3,7 @@
 # metadata-ai-bachelor
 Repository for bachelor thesis: "Automation using artificial intelligence".
 
-Python script for generating metadata for Word documents using DeBERTaV3 through Huggingface.
+Python script for generating metadata for Word documents using DeBERTaV3 and RoBERTa through Huggingface.
 
 Run test.py with Python 3.12.1 (or newer) in order to run the project.
 
