@@ -127,10 +127,10 @@ def clean_entity(entity):
     return re.sub(r'(^\W+|\W+$)', '', entity)
 
 # Sample execution with your classifier and documentText
-res1 = classifier(documentText)
+resOrgs = classifier(documentText)
 
 # Assuming classifier results are stored in res1, and it includes 'start' and 'end' positions
-org_entities = [entity for entity in res1 if entity['entity'] in ('I-ORG', 'B-ORG')]
+org_entities = [entity for entity in resOrgs if entity['entity'] in ('I-ORG', 'B-ORG')]
 
 # Preparing entities for merging, including word extraction
 for entity in org_entities:
@@ -145,13 +145,19 @@ qa_model = pipeline("question-answering", "timpal0l/mdeberta-v3-base-squad2")
 
 #"Vad är detta för dokument?" "Vad är detta för process?" "Vilket företag gäller dokumentet?" "Vad är dokumentdatumet?" "Vem är referensperson?" 
 
-questionDocument = "Vem är ansvarig utgivare?"
+questionDocumentType = "Vad är detta för dokumenttyp?"
+questionProcess = "Vad är detta för process?"
+questionPublisher = "Vem är ansvarig utgivare?"
 
 context = documentText
 
-res = qa_model(question = questionDocument, context = context)
+resPublisher = qa_model(question = questionPublisher, context = context)
+resDocumentType = qa_model(question = questionDocumentType, context = context)
+resProcess = qa_model(question = questionProcess, context = context)
 
-answer_DocumentType = res['answer']
+answer_DocumentType = resPublisher['answer']
 
-print(res)
+print(resPublisher)
+print(resDocumentType)
+print(resProcess)
 #print(answer_DocumentType)
