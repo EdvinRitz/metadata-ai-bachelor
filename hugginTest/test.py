@@ -7,6 +7,9 @@ import docx
 from lxml import etree
 import zipfile
 import re
+from memory_profiler import profile
+import time
+
 
 site_url = ''
 
@@ -77,7 +80,7 @@ def clean_entity(entity):
 
     return entity
 
-    
+   
 def process_docx_file(file_content, file_name):
     # Initialize a list to hold the results from this function
     local_results = []
@@ -168,7 +171,7 @@ def process_docx_file(file_content, file_name):
     # Return the list of results from this function
     return local_results
     
-
+@profile #Comment this out if not testing
 def explore_and_process_docx(folder_path, file_limit, results_list):
     # Check if the file processing limit has been reached
     if processed_files_counter['count'] >= file_limit:
@@ -211,8 +214,16 @@ def explore_and_process_docx(folder_path, file_limit, results_list):
 root_folder_path = 'Delade dokument'
 processed_files_counter = {'count': 0}
 explored_folders_counter = {'count': 0}
-file_limit = 2
+
+file_limit = 2 #Max number of files processed
+
+start_time = time.time() #Comment out all time code if not testing
+
 explore_and_process_docx(root_folder_path, file_limit, results_list)
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+print(f"Total execution time: {elapsed_time} seconds")
 
 print('Files processed: ' + str(processed_files_counter['count']))
 print('Folders explored: ' + str(explored_folders_counter['count']))
@@ -223,4 +234,4 @@ final_result_string = "\n".join(results_list)
 
 #Upload results as a .txt file to the SharePoint
 folder = site.Folder('Delade dokument')
-folder.upload_file(final_result_string, 'test.txt')
+#folder.upload_file(final_result_string, 'test.txt')
