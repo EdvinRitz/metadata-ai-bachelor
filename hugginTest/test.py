@@ -28,7 +28,7 @@ classifier = pipeline("ner", model=model, tokenizer=tokenizer)
 qa_model = pipeline("question-answering", "timpal0l/mdeberta-v3-base-squad2")
 
 questionDocumentType = "Vad är titeln för dokumentet?"
-questionProcess = "Vad är detta för process?"
+questionProcess = "Vilken process beskriver dokumentet?"
 questionPublisher = "Vem är ansvarig utgivare?"
 
 authcookie = Office365('', username='', password='').GetCookies()
@@ -90,6 +90,7 @@ def process_docx_file(file_content, file_name):
     for para in doc.paragraphs:
         documentText += para.text + "\n"
     
+    print('start')
     # Here you can do something with the extracted text
     print(f"Processed {file_name}")
 
@@ -108,13 +109,64 @@ def process_docx_file(file_content, file_name):
 
     print(merged_and_cleaned_org_entities)
 
-def explore_and_process_docx(folder_path):
+    resPublisher = qa_model(question = questionPublisher, context = documentText)
+    resDocumentType = qa_model(question = questionDocumentType, context = documentText)
+    resProcess = qa_model(question = questionProcess, context = documentText)
+
+    #answer_DocumentType = resPublisher['answer']
+
+    print('Ansvarig person är: ' + resPublisher['answer'])
+    print('Dokumenttyp är: ' + resDocumentType['answer'])
+    print('Processen är: ' + resProcess['answer'])
+
+        # Extract metadata
+    with zipfile.ZipFile(file_name, 'r') as docx_zip:
+        # Extracting core properties including author and dates
+        with docx_zip.open('docProps/core.xml') as core_xml:
+            tree = etree.parse(core_xml)
+            namespaces = {
+            'cp': 'http://schemas.openxmlformats.org/package/2006/metadata/core-properties',
+            'dc': 'http://purl.org/dc/elements/1.1/',
+            'dcterms': 'http://purl.org/dc/terms/',
+            'dcmitype': 'http://purl.org/dc/dcmitype/',
+            'xsi': 'http://www.w3.org/2001/XMLSchema-instance'
+            }
+        
+            created = tree.find('.//dcterms:created', namespaces)
+            modified = tree.find('.//dcterms:modified', namespaces)
+            creator = tree.find('.//dc:creator', namespaces)
+        
+            print(f"Creation date: {created.text if created is not None else 'Not available'}")
+            print(f"Last modified date: {modified.text if modified is not None else 'Not available'}")
+            print(f"Author: {creator.text if creator is not None else 'Not available'}")
+
+        # Extracting application (program name) properties
+        with docx_zip.open('docProps/app.xml') as app_xml:
+            tree = etree.parse(app_xml)
+            namespaces = {
+                'ep': 'http://schemas.openxmlformats.org/officeDocument/2006/extended-properties',
+                'vt': 'http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes'
+            }
+        
+            application = tree.find('.//ep:Application', namespaces)
+        
+            print(f"Program Name: {application.text if application is not None else 'Not available'}")
+
+    print('end')
+    
+
+def explore_and_process_docx(folder_path, file_limit):
+    # Check if the file processing limit has been reached
+    if processed_files_counter['count'] >= file_limit:
+        return  # Exit the function
+    
     try:
         folder = site.Folder(folder_path)
+        explored_folders_counter['count'] += 1
         # Process each file in the current folder
         for file_info in folder.files:
             file_name = file_info['Name']
-            if file_name.endswith('.docx'):
+            if file_name.endswith('.docx'): 
                 print(f"Found .docx file: {file_name}")
                 downloaded_doc = folder.get_file(file_name)
                 process_docx_file(downloaded_doc, file_name)
@@ -126,16 +178,19 @@ def explore_and_process_docx(folder_path):
             # Construct the path for the subfolder
             subfolder_path = f"{folder_path}/{subfolder_name}" if folder_path else subfolder_name
             print(f"Exploring subfolder: {subfolder_path}")
-            explore_and_process_docx(subfolder_path)
+            explore_and_process_docx(subfolder_path, file_limit)
     except Exception as e:
         print(f"Error exploring {folder_path}: {e}")
 
 # Start exploration from the root folder path
 root_folder_path = 'Delade dokument'
 processed_files_counter = {'count': 0}
-explore_and_process_docx(root_folder_path)
+explored_folders_counter = {'count': 0}
+file_limit = 10
+explore_and_process_docx(root_folder_path, file_limit)
 
-print(processed_files_counter)
+print('Files processed: ' + str(processed_files_counter['count']))
+print('Folders explored: ' + str(explored_folders_counter['count']))
 
 #explore_and_process_docx(folder)
 
