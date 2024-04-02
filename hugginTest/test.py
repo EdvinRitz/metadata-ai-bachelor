@@ -75,8 +75,14 @@ def merge_and_clean_entities(entities, text):
 
 # Define a clean_entity function that doesn't lower case but still removes unwanted characters
 def clean_entity(entity):
-    # Remove leading/trailing punctuation; keep internal punctuation and original casing
-    return re.sub(r'(^\W+|\W+$)', '', entity)
+    # First, strip leading/trailing whitespace characters, including newlines and tabs
+    entity = entity.strip()
+
+    # Then, remove leading/trailing punctuation using regex
+    # \W matches any non-word character, equivalent to [^a-zA-Z0-9_], combined with strip() should cover the requirement
+    entity = re.sub(r'^\W+|\W+$', '', entity)
+
+    return entity
 
     
 def process_docx_file(file_content, file_name):
@@ -109,17 +115,18 @@ def process_docx_file(file_content, file_name):
 
     print(merged_and_cleaned_org_entities)
 
+    #These take alot of time
     resPublisher = qa_model(question = questionPublisher, context = documentText)
     resDocumentType = qa_model(question = questionDocumentType, context = documentText)
     resProcess = qa_model(question = questionProcess, context = documentText)
 
     #answer_DocumentType = resPublisher['answer']
 
-    print('Ansvarig person är: ' + resPublisher['answer'])
-    print('Dokumenttyp är: ' + resDocumentType['answer'])
-    print('Processen är: ' + resProcess['answer'])
+    print('Ansvarig person är: ' + clean_entity(resPublisher['answer']))
+    print('Dokumenttyp är: ' + clean_entity(resDocumentType['answer']))
+    print('Processen är: ' + clean_entity(resProcess['answer']))
 
-        # Extract metadata
+    # Extract metadata
     with zipfile.ZipFile(file_name, 'r') as docx_zip:
         # Extracting core properties including author and dates
         with docx_zip.open('docProps/core.xml') as core_xml:
