@@ -1,4 +1,4 @@
-**Status:** In-progress (code is actively written)
+**Status:** Archive (code is provided as-is, no updates expected)
 
 # metadata-ai-bachelor
 Repository for bachelor thesis: "Automation using artificial intelligence".
